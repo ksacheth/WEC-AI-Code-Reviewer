@@ -9,10 +9,15 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@codemirror/lang-javascript": "^6.2.4",
     "@google/generative-ai": "^0.24.1",
+    "@uiw/react-codemirror": "^4.25.2",
+    "motion": "^12.23.24",
     "next": "16.0.0",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-diff-view": "^3.3.2",
+    "react-dom": "19.2.0",
+    "unidiff": "^1.0.4"
   },
   "devDependencies": {
     "babel-plugin-react-compiler": "1.0.0",
