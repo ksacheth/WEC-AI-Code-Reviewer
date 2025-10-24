@@ -3,7 +3,6 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import DiffViewer from "./components/DiffViewer";
 import CodeEditor from "./components/CodeEditor";
-import Image from "next/image";
 
 const SAMPLE_CODE = `function calculateTotal(items) {
   var total = 0;

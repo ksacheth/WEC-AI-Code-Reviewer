@@ -1,11 +1,17 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
-const AI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
 export async function POST(request) {
   try {
-    const { code, language='javascript' } = await request.json();
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json(
+        { error: "Gemini API key not configured" },
+        { status: 500 }
+      );
+    }
+
+    const AI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const { code, language = "javascript" } = await request.json();
     if (!code || code.trim().length === 0) {
       return NextResponse.json({ error: "Code is required" }, { status: 400 });
     }
@@ -44,7 +50,10 @@ export async function POST(request) {
     const text = response.text().trim();
 
     // Gemini can occasionally wrap JSON in markdown fences or prepend notes; strip those before parsing.
-    let cleanedText = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+    let cleanedText = text
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```$/, "")
+      .trim();
     if (!cleanedText) {
       throw new Error("Empty response from model");
     }
@@ -60,23 +69,33 @@ export async function POST(request) {
       reviewData = JSON.parse(jsonMatch[0]);
     }
 
-    if (!reviewData.improvedCode || !reviewData.explanation || !reviewData.category) {
-      throw new Error('Incomplete review data');
+    if (
+      !reviewData.improvedCode ||
+      !reviewData.explanation ||
+      !reviewData.category
+    ) {
+      throw new Error("Incomplete review data");
     }
 
-    const validCategories = ['Best Practices', 'Better Performance', 'Bug Fix', 'Code Quality', 'Security Fix'];
+    const validCategories = [
+      "Best Practices",
+      "Better Performance",
+      "Bug Fix",
+      "Code Quality",
+      "Security Fix",
+    ];
     if (!validCategories.includes(reviewData.category)) {
-      reviewData.category = 'Best Practices';
+      reviewData.category = "Best Practices";
     }
 
     return NextResponse.json({
       success: true,
-      review: reviewData
+      review: reviewData,
     });
   } catch (e) {
-    console.error('Error reviewing code:', e);
+    console.error("Error reviewing code:", e);
     return NextResponse.json(
-      { error: 'Failed to review code', details: e.message },
+      { error: "Failed to review code", details: e.message },
       { status: 500 }
     );
   }
