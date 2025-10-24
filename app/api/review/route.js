@@ -5,7 +5,7 @@ const AI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export async function POST(request) {
   try {
-    const { code } = await request.json();
+    const { code, language='javascript' } = await request.json();
     if (!code || code.trim().length === 0) {
       return NextResponse.json({ error: "Code is required" }, { status: 400 });
     }
@@ -41,9 +41,24 @@ export async function POST(request) {
                     Respond with valid JSON only:`;
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const text = response.text();
+    const text = response.text().trim();
 
-    const reviewData = JSON.parse(jsonMatch[0]);
+    // Gemini can occasionally wrap JSON in markdown fences or prepend notes; strip those before parsing.
+    let cleanedText = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+    if (!cleanedText) {
+      throw new Error("Empty response from model");
+    }
+
+    let reviewData;
+    try {
+      reviewData = JSON.parse(cleanedText);
+    } catch {
+      const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error("Model response was not valid JSON");
+      }
+      reviewData = JSON.parse(jsonMatch[0]);
+    }
 
     if (!reviewData.improvedCode || !reviewData.explanation || !reviewData.category) {
       throw new Error('Incomplete review data');
